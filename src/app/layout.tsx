@@ -5,6 +5,28 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'WeekWise',
   description: 'A weekly planner to organize your life.',
+  manifest: '/manifest.json',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: 'cover'
+  },
+  themeColor: '#60a5fa',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'WeekWise',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: "/icons/icon-192x192.svg",
+    shortcut: "/icons/icon-192x192.svg",
+    apple: "/icons/icon-192x192.svg",
+  },
 };
 
 export default function RootLayout({
