@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import type { Day, DayTasks, Task } from '@/lib/types';
+import { useTasks } from '@/hooks/use-tasks';
+import type { Day } from '@/lib/types';
 import DayColumn from './DayColumn';
 import { getSuggestedTaskAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
+import Loader from './Loader';
 
 const daysOfWeek: Day[] = [
   'Monday',
@@ -17,56 +18,28 @@ const daysOfWeek: Day[] = [
   'Sunday',
 ];
 
-const initialTasks: DayTasks = {
-  Monday: [],
-  Tuesday: [],
-  Wednesday: [],
-  Thursday: [],
-  Friday: [],
-  Saturday: [],
-  Sunday: [],
-};
-
 export default function WeeklyPlanner() {
-  const [tasks, setTasks] = useLocalStorage<DayTasks>('tasks', initialTasks);
+  const { tasks, loading, addTask, toggleTask, deleteTask, updateTask, allTasksForAI } = useTasks();
   const { toast } = useToast();
 
   const handleAddTask = (day: Day, text: string) => {
-    const newTask: Task = { id: crypto.randomUUID(), text, completed: false };
-    setTasks((prev) => ({
-      ...prev,
-      [day]: [...prev[day], newTask],
-    }));
+    addTask(day, text);
   };
 
   const handleToggleTask = (day: Day, taskId: string) => {
-    setTasks((prev) => ({
-      ...prev,
-      [day]: prev[day].map((task) =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-      ),
-    }));
+    toggleTask(day, taskId);
   };
 
   const handleDeleteTask = (day: Day, taskId: string) => {
-    setTasks((prev) => ({
-      ...prev,
-      [day]: prev[day].filter((task) => task.id !== taskId),
-    }));
+    deleteTask(day, taskId);
   };
 
   const handleUpdateTask = (day: Day, taskId: string, newText: string) => {
-    setTasks((prev) => ({
-      ...prev,
-      [day]: prev[day].map((task) =>
-        task.id === taskId ? { ...task, text: newText } : task
-      ),
-    }));
+    updateTask(day, taskId, newText);
   };
   
   const handleSuggestTask = async (day: Day) => {
-    const allTasks = Object.values(tasks).flat().map(t => t.text);
-    const result = await getSuggestedTaskAction(day, allTasks);
+    const result = await getSuggestedTaskAction(day, allTasksForAI);
 
     if (result.success && result.data && result.data.length > 0) {
       const suggestion = result.data[Math.floor(Math.random() * result.data.length)];
@@ -84,6 +57,13 @@ export default function WeeklyPlanner() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
+        {daysOfWeek.map(day => <div key={day} className="h-[400px] w-full rounded-lg bg-card shadow-sm animate-pulse" />)}
+      </div>
+    )
+  }
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">

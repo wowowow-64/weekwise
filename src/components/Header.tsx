@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BookCheck, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { BookCheck, Loader2, LogOut, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,26 +12,29 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { getWeeklySummaryAction } from '@/app/actions';
-import type { DayTasks, Task } from '@/lib/types';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { useTasks } from '@/hooks/use-tasks';
+import { auth } from '@/lib/firebase';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-const initialTasks: DayTasks = {
-  Monday: [],
-  Tuesday: [],
-  Wednesday: [],
-  Thursday: [],
-  Friday: [],
-  Saturday: [],
-  Sunday: [],
-};
 
 export default function Header() {
-  const [tasks] = useLocalStorage<DayTasks>('tasks', initialTasks);
+  const { user } = useAuth();
+  const { tasks } = useTasks();
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [summary, setSummary] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleGetSummary = async () => {
     setIsLoading(true);
@@ -63,6 +67,11 @@ export default function Header() {
     }
     setIsLoading(false);
   };
+  
+  const handleSignOut = async () => {
+    await auth.signOut();
+    router.push('/login');
+  };
 
   return (
     <>
@@ -70,14 +79,45 @@ export default function Header() {
         <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           WeekWise
         </h1>
-        <Button onClick={handleGetSummary} disabled={isLoading}>
-          {isLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <BookCheck className="mr-2 h-4 w-4" />
-          )}
-          Summarize Week
-        </Button>
+        <div className="flex items-center gap-4">
+            <Button onClick={handleGetSummary} disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <BookCheck className="mr-2 h-4 w-4" />
+              )}
+              Summarize Week
+            </Button>
+            {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
+                    <AvatarFallback>
+                        <UserIcon/>
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">My Account</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            )}
+        </div>
       </div>
       <Dialog open={isSummaryOpen} onOpenChange={setIsSummaryOpen}>
         <DialogContent className="sm:max-w-[425px]">
