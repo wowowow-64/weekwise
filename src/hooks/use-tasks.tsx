@@ -1,7 +1,7 @@
 
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import {
   collection,
   query,
@@ -17,6 +17,7 @@ import {
 import { firestore } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import type { Task, Day, DayTasks } from '@/lib/types';
+import { startOfWeek, endOfWeek } from 'date-fns';
 
 interface TasksContextType {
     tasks: DayTasks;
@@ -44,12 +45,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<DayTasks>(initialTasks);
   const [loading, setLoading] = useState(true);
-  const [allTasksForAI, setAllTasksForAI] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) {
       setTasks(initialTasks);
-      setAllTasksForAI([]);
       setLoading(false);
       return;
     }
@@ -57,14 +56,18 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     const tasksCollectionRef = collection(firestore, 'users', user.uid, 'tasks');
     
-    // Fetch tasks from the last 90 days to improve performance
-    const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-    const ninetyDaysAgoTimestamp = Timestamp.fromDate(ninetyDaysAgo);
+    // Fetch tasks for the current week to improve performance
+    const now = new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+    const weekStartTimestamp = Timestamp.fromDate(weekStart);
+    const weekEndTimestamp = Timestamp.fromDate(weekEnd);
+
 
     const q = query(
       tasksCollectionRef,
-      where('createdAt', '>=', ninetyDaysAgoTimestamp),
+      where('createdAt', '>=', weekStartTimestamp),
+      where('createdAt', '<=', weekEndTimestamp),
       orderBy('createdAt', 'desc')
     );
 
@@ -74,14 +77,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         const task = { id: doc.id, ...doc.data() } as Task;
         if (newTasksState[task.day]) {
           newTasksState[task.day].push(task);
+        } else {
+          // Handle case where task.day is not a valid Day key, if necessary
+          console.warn(`Task has invalid day: ${task.day}`);
         }
       });
-
       setTasks(newTasksState);
-      
-      const allTasksText = Object.values(newTasksState).flat().map(t => t.text);
-      setAllTasksForAI(allTasksText);
-
       setLoading(false);
     }, (error) => {
       console.error("Error fetching tasks: ", error);
@@ -90,6 +91,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     return () => unsubscribe();
   }, [user]);
+
+  const allTasksForAI = useMemo(() => {
+    return Object.values(tasks).flat().map(t => t.text);
+  }, [tasks]);
 
   const addTask = useCallback(async (day: Day, text: string) => {
     if (!user) return;

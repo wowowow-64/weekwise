@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useTransition, useEffect } from 'react';
+import React, { useState, useTransition, useEffect, ChangeEvent } from 'react';
 import { Plus, Sparkles, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,6 @@ import type { Day, Task, Note } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { Textarea } from './ui/textarea';
-import { useDebounce } from '@/hooks/use-debounce';
 
 interface DayColumnProps {
   day: Day;
@@ -39,18 +38,18 @@ function DayColumn({
   const [newTaskText, setNewTaskText] = useState('');
   const [noteContent, setNoteContent] = useState(note?.content || '');
   const [isPending, startTransition] = useTransition();
-  const debouncedNoteContent = useDebounce(noteContent, 1500);
-
+  
   useEffect(() => {
+    // Sync local state if the note prop changes from the outside
     setNoteContent(note?.content || '');
   }, [note]);
 
-  useEffect(() => {
-    if (debouncedNoteContent !== (note?.content || '')) {
-      onUpdateNote(debouncedNoteContent);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedNoteContent, note?.content]);
+  const handleNoteChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value;
+    setNoteContent(newContent); // Update local state immediately for responsiveness
+    onUpdateNote(newContent); // Call the debounced update function from props
+  };
+
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +96,7 @@ function DayColumn({
             <h3 className="text-sm font-semibold text-muted-foreground mb-2">Notes</h3>
             <Textarea
               value={noteContent}
-              onChange={(e) => setNoteContent(e.target.value)}
+              onChange={handleNoteChange}
               placeholder="Your notes for the day..."
               className="h-[120px] resize-none"
               aria-label={`Notes for ${day}`}

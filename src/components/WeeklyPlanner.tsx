@@ -1,13 +1,14 @@
 
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTasks } from '@/hooks/use-tasks';
 import { useNotes } from '@/hooks/use-notes';
 import type { Day } from '@/lib/types';
 import DayColumn from './DayColumn';
 import { getSuggestedTaskAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
 
 const daysOfWeek: Day[] = [
   'Monday',
@@ -18,6 +19,21 @@ const daysOfWeek: Day[] = [
   'Saturday',
   'Sunday',
 ];
+
+// Debounce function
+function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+
+  const debounced = (...args: Parameters<F>) => {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => func(...args), waitFor);
+  };
+
+  return debounced;
+}
+
 
 export default function WeeklyPlanner() {
   const { tasks, loading: tasksLoading, addTask, toggleTask, deleteTask, updateTask, allTasksForAI } = useTasks();
@@ -39,10 +55,16 @@ export default function WeeklyPlanner() {
   const handleUpdateTask = useCallback((day: Day, taskId: string, newText: string) => {
     updateTask(day, taskId, newText);
   }, [updateTask]);
+  
+  const debouncedUpdateNote = useMemo(() => {
+    return debounce((day: Day, content: string) => {
+      updateNote(day, content);
+    }, 1500);
+  }, [updateNote]);
 
   const handleUpdateNote = useCallback((day: Day, content: string) => {
-    updateNote(day, content);
-  }, [updateNote]);
+    debouncedUpdateNote(day, content);
+  }, [debouncedUpdateNote]);
   
   const handleSuggestTask = useCallback(async (day: Day) => {
     const result = await getSuggestedTaskAction(day, allTasksForAI);
