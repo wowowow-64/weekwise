@@ -41,13 +41,16 @@ function DayColumn({
   
   useEffect(() => {
     // Sync local state if the note prop changes from the outside
+    // This happens on initial load or if another client changes the data
     setNoteContent(note?.content || '');
   }, [note]);
 
   const handleNoteChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
-    setNoteContent(newContent); // Update local state immediately for responsiveness
-    onUpdateNote(newContent); // Call the debounced update function from props
+    // Update local state immediately for a responsive UI
+    setNoteContent(newContent); 
+    // Call the debounced update function passed from the parent
+    onUpdateNote(newContent); 
   };
 
 

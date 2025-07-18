@@ -8,17 +8,6 @@ import type { Day } from '@/lib/types';
 import DayColumn from './DayColumn';
 import { getSuggestedTaskAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { useDebounce } from '@/hooks/use-debounce';
-
-const daysOfWeek: Day[] = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
 
 // Debounce function
 function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
@@ -56,10 +45,12 @@ export default function WeeklyPlanner() {
     updateTask(day, taskId, newText);
   }, [updateTask]);
   
+  // This function is now stable and won't be recreated on every render,
+  // preventing the performance bottleneck.
   const debouncedUpdateNote = useMemo(() => {
     return debounce((day: Day, content: string) => {
       updateNote(day, content);
-    }, 1500);
+    }, 500); // 500ms delay
   }, [updateNote]);
 
   const handleUpdateNote = useCallback((day: Day, content: string) => {
@@ -92,6 +83,16 @@ export default function WeeklyPlanner() {
       </div>
     )
   }
+
+  const daysOfWeek: Day[] = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">

@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-
-// This custom hook is no longer the most efficient way to handle debouncing
-// for our use case, but it's kept here for potential future use or reference.
+// This file is no longer used and can be safely removed or ignored.
 // The debouncing logic has been moved directly into the WeeklyPlanner component
-// for better performance by creating a stable debounced function.
+// for better performance by creating a stable debounced function using useMemo.
+// Keeping it for reference is fine, but it is not actively used by the application.
+
+import { useState, useEffect } from 'react';
 
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
