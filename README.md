@@ -76,6 +76,7 @@ If you prefer not to use the CLI, you can create the index manually in the Fireb
 5.  In the "Add exemption" dialog that appears, set the following fields:
     *   **Collection ID:** `tasks`
     *   **Field path:** `createdAt`
+    *   **Query scopes:** Select **Collection**.
     *   Under **Configuration**, check the box for **Descending** ordering.
     *   Make sure **Array** is unchecked.
 6.  Click **Save**.
