@@ -18,7 +18,13 @@ export function encrypt(text: string): string {
 }
 
 export function decrypt(ciphertext: string): string {
-  // Using atob to decode from base64
-  const decoded = atob(ciphertext);
-  return cypher(decoded, SECRET_KEY);
+  try {
+    // Using atob to decode from base64
+    const decoded = atob(ciphertext);
+    return cypher(decoded, SECRET_KEY);
+  } catch (e) {
+    console.error("Failed to decrypt data. It might not be correctly encoded.", e);
+    // If atob fails, it's not a valid encrypted string. Return empty.
+    return "";
+  }
 }

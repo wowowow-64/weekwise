@@ -19,12 +19,17 @@ const getFirebaseConfig = (): FirebaseOptions | null => {
     try {
       // Decrypt the config before parsing
       const decryptedConfig = decrypt(storedConfig);
+      // If decryption fails, it returns an empty string, which will cause JSON.parse to fail.
+      // This is caught below.
+      if (!decryptedConfig) {
+        throw new Error("Decrypted config is empty.");
+      }
       const config = JSON.parse(decryptedConfig);
       if (config.apiKey && config.projectId) {
         return config;
       }
     } catch (e) {
-      console.error("Could not parse firebaseConfig from localStorage", e);
+      console.error("Could not parse firebaseConfig from localStorage. It might be malformed or from an old version.", e);
       // If there's an error (e.g., malformed data), clear it.
       localStorage.removeItem('firebaseConfig');
     }
