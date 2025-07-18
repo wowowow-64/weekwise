@@ -5,6 +5,7 @@ import { AuthProvider } from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
 import { initializeFirebase } from '@/lib/firebase';
 import Loader from '@/components/Loader';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export default function ClientLayout({
   children,
@@ -23,8 +24,15 @@ export default function ClientLayout({
   }
   
   return (
-    <AuthProvider>
-      {children}
-    </AuthProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <AuthProvider>
+        {children}
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

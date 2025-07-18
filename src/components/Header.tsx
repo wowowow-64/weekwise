@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookCheck, Loader2, LogOut, User as UserIcon } from 'lucide-react';
+import { BookCheck, Loader2, LogOut, User as UserIcon, Moon, Sun } from 'lucide-react';
+import { useTheme } from "next-themes"
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -26,6 +27,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
+function ThemeToggle() {
+  const { setTheme, theme } = useTheme()
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+    >
+      <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <span className="sr-only">Toggle theme</span>
+    </Button>
+  )
+}
 
 export default function Header() {
   const { user } = useAuth();
@@ -80,7 +96,7 @@ export default function Header() {
           WeekWise
         </h1>
         <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-            <div className="ml-auto flex-1 sm:flex-initial">
+            <div className="ml-auto flex items-center gap-2">
               <Button onClick={handleGetSummary} disabled={isLoading}>
                 {isLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -89,6 +105,7 @@ export default function Header() {
                 )}
                 Summarize Week
               </Button>
+              <ThemeToggle />
             </div>
             {user && (
             <DropdownMenu>
