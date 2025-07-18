@@ -1,7 +1,9 @@
+
 'use client';
 
 import React from 'react';
 import { useTasks } from '@/hooks/use-tasks';
+import { useNotes } from '@/hooks/use-notes';
 import type { Day } from '@/lib/types';
 import DayColumn from './DayColumn';
 import { getSuggestedTaskAction } from '@/app/actions';
@@ -18,7 +20,8 @@ const daysOfWeek: Day[] = [
 ];
 
 export default function WeeklyPlanner() {
-  const { tasks, loading, addTask, toggleTask, deleteTask, updateTask, allTasksForAI } = useTasks();
+  const { tasks, loading: tasksLoading, addTask, toggleTask, deleteTask, updateTask, allTasksForAI } = useTasks();
+  const { notes, loading: notesLoading, updateNote } = useNotes();
   const { toast } = useToast();
 
   const handleAddTask = (day: Day, text: string) => {
@@ -36,6 +39,10 @@ export default function WeeklyPlanner() {
   const handleUpdateTask = (day: Day, taskId: string, newText: string) => {
     updateTask(day, taskId, newText);
   };
+
+  const handleUpdateNote = (day: Day, content: string) => {
+    updateNote(day, content);
+  }
   
   const handleSuggestTask = async (day: Day) => {
     const result = await getSuggestedTaskAction(day, allTasksForAI);
@@ -56,10 +63,10 @@ export default function WeeklyPlanner() {
     }
   };
 
-  if (loading) {
+  if (tasksLoading || notesLoading) {
     return (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
-        {daysOfWeek.map(day => <div key={day} className="h-[400px] w-full rounded-lg bg-card shadow-sm animate-pulse" />)}
+        {daysOfWeek.map(day => <div key={day} className="h-[500px] w-full rounded-lg bg-card shadow-sm animate-pulse" />)}
       </div>
     )
   }
@@ -71,11 +78,13 @@ export default function WeeklyPlanner() {
           key={day}
           day={day}
           tasks={tasks?.[day] ?? []}
+          note={notes?.[day] ?? null}
           onAddTask={(text) => handleAddTask(day, text)}
           onToggleTask={(taskId) => handleToggleTask(day, taskId)}
           onDeleteTask={(taskId) => handleDeleteTask(day, taskId)}
           onUpdateTask={(taskId, newText) => handleUpdateTask(day, taskId, newText)}
           onSuggestTask={() => handleSuggestTask(day)}
+          onUpdateNote={(content) => handleUpdateNote(day, content)}
         />
       ))}
     </div>

@@ -1,36 +1,55 @@
+
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { Plus, Sparkles, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import TaskItem from './TaskItem';
-import type { Day, Task } from '@/lib/types';
+import type { Day, Task, Note } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
+import { Textarea } from './ui/textarea';
+import { useDebounce } from '@/hooks/use-debounce';
 
 interface DayColumnProps {
   day: Day;
   tasks: Task[];
+  note: Note | null;
   onAddTask: (text: string) => void;
   onToggleTask: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
   onUpdateTask: (taskId: string, newText: string) => void;
   onSuggestTask: () => Promise<void>;
+  onUpdateNote: (content: string) => void;
 }
 
 export default function DayColumn({
   day,
   tasks,
+  note,
   onAddTask,
   onToggleTask,
   onDeleteTask,
   onUpdateTask,
-  onSuggestTask
+  onSuggestTask,
+  onUpdateNote,
 }: DayColumnProps) {
   const [newTaskText, setNewTaskText] = useState('');
+  const [noteContent, setNoteContent] = useState(note?.content || '');
   const [isPending, startTransition] = useTransition();
+  const debouncedNoteContent = useDebounce(noteContent, 1500);
+
+  useEffect(() => {
+    setNoteContent(note?.content || '');
+  }, [note]);
+
+  useEffect(() => {
+    if (debouncedNoteContent !== (note?.content || '')) {
+      onUpdateNote(debouncedNoteContent);
+    }
+  }, [debouncedNoteContent, onUpdateNote, note]);
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,28 +66,43 @@ export default function DayColumn({
   };
 
   return (
-    <Card className="flex h-full min-h-[400px] flex-col">
+    <Card className="flex h-full min-h-[500px] flex-col">
       <CardHeader>
         <CardTitle className="font-headline text-2xl">{day}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col justify-between gap-4">
-        <ScrollArea className="flex-grow pr-4">
-            <div className="flex flex-col gap-2">
-            {tasks.length > 0 ? (
-                tasks.map((task) => (
-                <TaskItem
-                    key={task.id}
-                    task={task}
-                    onToggle={() => onToggleTask(task.id)}
-                    onDelete={() => onDeleteTask(task.id)}
-                    onUpdate={(newText) => onUpdateTask(task.id, newText)}
-                />
-                ))
-            ) : (
-                <p className="text-sm text-muted-foreground">No tasks for today.</p>
-            )}
-            </div>
-        </ScrollArea>
+        <div className="flex-grow flex flex-col gap-4">
+          <div className="flex-grow">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2">Tasks</h3>
+            <ScrollArea className="h-[200px] pr-4">
+                <div className="flex flex-col gap-2">
+                {tasks.length > 0 ? (
+                    tasks.map((task) => (
+                    <TaskItem
+                        key={task.id}
+                        task={task}
+                        onToggle={() => onToggleTask(task.id)}
+                        onDelete={() => onDeleteTask(task.id)}
+                        onUpdate={(newText) => onUpdateTask(task.id, newText)}
+                    />
+                    ))
+                ) : (
+                    <p className="text-sm text-muted-foreground">No tasks for today.</p>
+                )}
+                </div>
+            </ScrollArea>
+          </div>
+          <div className="flex-grow">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2">Notes</h3>
+            <Textarea
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              placeholder="Your notes for the day..."
+              className="h-[120px] resize-none"
+              aria-label={`Notes for ${day}`}
+            />
+          </div>
+        </div>
         
         <div className="mt-auto pt-4">
             <Separator className="mb-4" />

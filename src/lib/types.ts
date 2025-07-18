@@ -1,8 +1,14 @@
+
 export interface Task {
   id: string;
   text: string;
   completed: boolean;
   day: Day;
+}
+
+export interface Note {
+  id: Day;
+  content: string;
 }
 
 export type Day =
@@ -15,3 +21,4 @@ export type Day =
   | 'Sunday';
 
 export type DayTasks = Record<Day, Task[]>;
+export type DayNotes = Record<Day, Note | null>;
