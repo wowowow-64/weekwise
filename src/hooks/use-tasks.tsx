@@ -69,30 +69,20 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-        setTasks(prevTasks => {
-            const newTasks = { ...prevTasks };
-            
-            snapshot.docChanges().forEach((change) => {
-                const task = { id: change.doc.id, ...change.doc.data() } as Task;
+      const newTasksState: DayTasks = { ...initialTasks };
+      snapshot.forEach((doc) => {
+        const task = { id: doc.id, ...doc.data() } as Task;
+        if (newTasksState[task.day]) {
+          newTasksState[task.day].push(task);
+        }
+      });
 
-                if (change.type === "added") {
-                    // Add to the beginning of the list to maintain order
-                    newTasks[task.day] = [task, ...newTasks[task.day].filter(t => t.id !== task.id)];
-                }
-                if (change.type === "modified") {
-                    newTasks[task.day] = newTasks[task.day].map(t => t.id === task.id ? task : t);
-                }
-                if (change.type === "removed") {
-                    newTasks[task.day] = newTasks[task.day].filter(t => t.id !== task.id);
-                }
-            });
+      setTasks(newTasksState);
+      
+      const allTasksText = Object.values(newTasksState).flat().map(t => t.text);
+      setAllTasksForAI(allTasksText);
 
-            const allTasksText = Object.values(newTasks).flat().map(t => t.text);
-            setAllTasksForAI(allTasksText);
-            return newTasks;
-        });
-
-        setLoading(false);
+      setLoading(false);
     }, (error) => {
       console.error("Error fetching tasks: ", error);
       setLoading(false);
