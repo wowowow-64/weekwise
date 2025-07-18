@@ -55,7 +55,7 @@ const initializeFirebase = () => {
       firestore = null;
       throw error; // Re-throw to be caught by AuthProvider
     }
-  } else if (getApps().length > 0) {
+  } else if (getApps().length > 0 && !app) { // check for !app ensures we don't re-assign on hot reloads
     app = getApp();
     auth = getAuth(app);
     firestore = getFirestore(app);
@@ -75,7 +75,5 @@ const getFirebaseFirestore = (): Firestore => {
     }
     return firestore;
 };
-
-initializeFirebase();
 
 export { initializeFirebase, getFirebaseAuth, getFirebaseFirestore };
