@@ -34,13 +34,31 @@ To run this project locally, you'll first need a Firebase project.
     ```bash
     npm install
     ```
-3.  Run the application:
+3.  Run the application in development mode:
     ```bash
     npm run dev
     ```
 4.  Open your browser to `http://localhost:9002/setup`.
 5.  Paste the entire Firebase config object from your Firebase project settings into the text area and save. This will store your configuration securely in your browser's local storage.
 6.  You will be redirected to the login page, where you can now sign up and start using the app.
+
+## 📦 Deployment
+
+To create a production-ready version of your application, you can run the build command:
+
+```bash
+npm run build
+```
+
+This command compiles the application and optimizes it for performance. The output will be in the `.next` directory. You can then deploy this directory to any hosting service that supports Next.js, such as Firebase App Hosting or Vercel.
+
+If you want to create a zip file of the project to share, you can run this command after the build (on macOS/Linux):
+
+```bash
+zip -r WeekWise.zip . -x ".next/*" "node_modules/*" ".DS_Store"
+```
+
+This will create a `WeekWise.zip` file with all your project code, excluding the large build and dependency folders.
 
 ## 🤝 How to Contribute
 
