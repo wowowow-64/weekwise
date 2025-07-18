@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, initializeFirebase } from '@/lib/firebase';
+import { initializeFirebase, getFirebaseAuth } from '@/lib/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -22,27 +22,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
       initializeFirebase();
+      const auth = getFirebaseAuth(); // Get auth instance after initialization
+      
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setUser(user);
+        setLoading(false);
+      });
+
+      return () => unsubscribe();
     } catch (error) {
       console.error("Firebase initialization failed in AuthProvider:", error);
       // If initialization fails, we must ensure loading is set to false
-      // so the app can proceed to a state where the user can fix the config (e.g., login page).
+      // so the app can proceed to a state where the user can fix the config.
       setLoading(false);
-      return;
     }
-
-    if (!auth) {
-        // This can happen if the config is missing/invalid.
-        // The user will be directed to the login/setup page.
-        setLoading(false);
-        return;
-    }
-    
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
   }, []);
   
   const value = { user, loading };

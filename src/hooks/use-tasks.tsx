@@ -14,10 +14,9 @@ import {
   orderBy,
   where,
 } from 'firebase/firestore';
-import { firestore } from '@/lib/firebase';
+import { getFirebaseFirestore } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import type { Task, Day, DayTasks } from '@/lib/types';
-import { subDays } from 'date-fns';
 
 interface TasksContextType {
     tasks: DayTasks | null;
@@ -60,10 +59,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const firestore = getFirebaseFirestore();
     const tasksCollectionRef = collection(firestore, 'users', user.uid, 'tasks');
     
-    // This is a much more efficient query for a weekly planner.
-    // It fetches only the tasks for the 7 days of the week.
     const q = query(
       tasksCollectionRef,
       where('day', 'in', daysOfWeek),
@@ -90,7 +88,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [user]);
 
-  // This is still needed for the AI suggestions, but now it's calculated from a much smaller dataset.
   const allTasksForAI = useMemo(() => {
     if (!tasks) return [];
     return Object.values(tasks).flat().map(t => t.text);
@@ -98,6 +95,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const addTask = useCallback(async (day: Day, text: string) => {
     if (!user) return;
+    const firestore = getFirebaseFirestore();
     const tasksCollectionRef = collection(firestore, 'users', user.uid, 'tasks');
     await addDoc(tasksCollectionRef, {
       text,
@@ -111,18 +109,21 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (!user || !tasks) return;
     const task = tasks[day]?.find(t => t.id === taskId);
     if (!task) return;
+    const firestore = getFirebaseFirestore();
     const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
     await updateDoc(taskDocRef, { completed: !task.completed });
   }, [user, tasks]);
   
   const deleteTask = useCallback(async (day: Day, taskId: string) => {
     if (!user) return;
+    const firestore = getFirebaseFirestore();
     const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
     await deleteDoc(taskDocRef);
   }, [user]);
 
   const updateTask = useCallback(async (day: Day, taskId: string, newText: string) => {
     if (!user) return;
+    const firestore = getFirebaseFirestore();
     const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
     await updateDoc(taskDocRef, { text: newText });
   }, [user]);

@@ -10,7 +10,7 @@ import {
   setDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { firestore } from '@/lib/firebase';
+import { getFirebaseFirestore } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import type { Day, DayNotes, Note } from '@/lib/types';
 
@@ -41,6 +41,7 @@ export function NoteProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const firestore = getFirebaseFirestore();
     const notesCollectionRef = collection(firestore, 'users', user.uid, 'notes');
     const q = query(notesCollectionRef);
 
@@ -62,6 +63,7 @@ export function NoteProvider({ children }: { children: ReactNode }) {
 
   const updateNote = useCallback(async (day: Day, content: string) => {
     if (!user) return;
+    const firestore = getFirebaseFirestore();
     const noteDocRef = doc(firestore, 'users', user.uid, 'notes', day);
     await setDoc(noteDocRef, {
       id: day,

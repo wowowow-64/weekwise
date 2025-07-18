@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -56,6 +56,7 @@ export default function LoginPage() {
     if (isLoading || isGoogleLoading) return;
     setIsLoading(true);
     try {
+      const auth = getFirebaseAuth();
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/planner');
     } catch (error: any) {
@@ -77,6 +78,7 @@ export default function LoginPage() {
     if (isLoading || isGoogleLoading) return;
     setIsGoogleLoading(true);
     try {
+      const auth = getFirebaseAuth();
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       router.push('/planner');
