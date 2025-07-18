@@ -18,11 +18,16 @@ export default function PlannerLayout({
   const router = useRouter();
 
   useEffect(() => {
+    // If the auth state is no longer loading and there's no user,
+    // it means they should be sent to the login page.
+    // This can happen if they navigate here directly.
     if (!loading && !user) {
       router.replace('/login');
     }
   }, [user, loading, router]);
 
+  // While we are verifying the user or if the user is not yet available, show a loader.
+  // This prevents a flash of the planner page before the redirect can happen.
   if (loading || !user) {
     return <Loader />;
   }
