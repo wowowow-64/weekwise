@@ -42,11 +42,13 @@ To run this project locally, you'll first need a Firebase project.
 5.  Paste the entire Firebase config object from your Firebase project settings into the text area and save. This will store your configuration securely in your browser's local storage.
 6.  You will be redirected to the login page, where you can now sign up and start using the app.
 
-### 3. IMPORTANT: Deploy Firestore Index for Performance
+### 3. IMPORTANT: Create a Firestore Index for Performance
 
-The application's performance relies on a specific Firestore index. Without it, the app will be very slow to load tasks. You must deploy the index definition included in the project.
+The application's performance relies on a specific Firestore index. **Without it, the app will be very slow to load tasks.** You must create this index in your Firebase project. You can do this in two ways:
 
-First, you need to install the Firebase CLI:
+#### Option A: Deploy via Firebase CLI (Recommended)
+
+This is the fastest method. First, you need to install the Firebase CLI:
 ```bash
 npm install -g firebase-tools
 ```
@@ -62,6 +64,22 @@ firebase deploy --only firestore:indexes
 ```
 
 This command will read the `firestore.indexes.json` file and create the necessary index in your Firebase project. Index creation can take a few minutes.
+
+#### Option B: Create the Index in the Web Console
+
+If you prefer not to use the CLI, you can create the index manually in the Firebase Console:
+
+1.  Go to your **Firebase project**.
+2.  In the left-hand menu, under `Build`, click on **Firestore Database**.
+3.  Go to the **Indexes** tab at the top.
+4.  Click on **Create index**.
+5.  Set the following fields:
+    *   **Collection ID:** `tasks`
+    *   **Fields to index:**
+        1.  **Field path:** `createdAt`, **Order:** `Descending`
+6.  Click **Create**.
+
+The index will start building and may take a few minutes to become active.
 
 ## 📦 Deployment
 
