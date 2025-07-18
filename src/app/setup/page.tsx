@@ -39,6 +39,11 @@ export default function SetupPage() {
     try {
       // Extract the JSON object from the script
       const jsonString = script.substring(script.indexOf('{'), script.lastIndexOf('}') + 1);
+
+      if (!jsonString) {
+        throw new Error("Invalid script format. Could not find Firebase config object.");
+      }
+
       const parsedConfig = JSON.parse(jsonString);
 
       // Basic validation
