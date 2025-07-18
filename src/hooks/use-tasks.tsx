@@ -17,11 +17,10 @@ import {
 import { firestore } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import type { Task, Day, DayTasks } from '@/lib/types';
-import { subDays, format } from 'date-fns';
+import { subDays } from 'date-fns';
 
 interface TasksContextType {
-    tasks: DayTasks;
-    loading: boolean;
+    tasks: DayTasks | null;
     addTask: (day: Day, text: string) => Promise<void>;
     toggleTask: (day: Day, taskId: string) => Promise<void>;
     deleteTask: (day: Day, taskId: string) => Promise<void>;
@@ -43,20 +42,16 @@ const initialTasks: DayTasks = {
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState<DayTasks>(initialTasks);
-  const [loading, setLoading] = useState(true);
+  const [tasks, setTasks] = useState<DayTasks | null>(null);
 
   useEffect(() => {
     if (!user) {
       setTasks(initialTasks);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
     const tasksCollectionRef = collection(firestore, 'users', user.uid, 'tasks');
     
-    // Fetch tasks from the last 90 days for better AI context without sacrificing performance
     const ninetyDaysAgo = subDays(new Date(), 90);
     const ninetyDaysAgoTimestamp = Timestamp.fromDate(ninetyDaysAgo);
 
@@ -67,18 +62,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newTasksState: DayTasks = { 
-        Monday: [],
-        Tuesday: [],
-        Wednesday: [],
-        Thursday: [],
-        Friday: [],
-        Saturday: [],
-        Sunday: [],
-      };
+      const newTasksState: DayTasks = { ...initialTasks };
       snapshot.forEach((doc) => {
         const task = { id: doc.id, ...doc.data() } as Task;
-        // Determine the day of the week from the 'day' field stored in the document
         const dayOfWeek = task.day;
         if (newTasksState[dayOfWeek]) {
           newTasksState[dayOfWeek].push(task);
@@ -87,16 +73,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         }
       });
       setTasks(newTasksState);
-      setLoading(false);
     }, (error) => {
       console.error("Error fetching tasks: ", error);
-      setLoading(false);
+      setTasks(initialTasks); // Set to initial on error
     });
 
     return () => unsubscribe();
   }, [user]);
 
   const allTasksForAI = useMemo(() => {
+    if (!tasks) return [];
     return Object.values(tasks).flat().map(t => t.text);
   }, [tasks]);
 
@@ -112,7 +98,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const toggleTask = useCallback(async (day: Day, taskId: string) => {
-    if (!user) return;
+    if (!user || !tasks) return;
     const task = tasks[day]?.find(t => t.id === taskId);
     if (!task) return;
     const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
@@ -131,7 +117,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     await updateDoc(taskDocRef, { text: newText });
   }, [user]);
 
-  const value = { tasks, loading, addTask, toggleTask, deleteTask, updateTask, allTasksForAI };
+  const value = { tasks, addTask, toggleTask, deleteTask, updateTask, allTasksForAI };
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
 }

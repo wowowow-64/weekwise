@@ -36,8 +36,8 @@ function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
 
 
 export default function WeeklyPlanner() {
-  const { tasks, loading: tasksLoading, addTask, toggleTask, deleteTask, updateTask, allTasksForAI } = useTasks();
-  const { notes, loading: notesLoading, updateNote } = useNotes();
+  const { tasks, addTask, toggleTask, deleteTask, updateTask, allTasksForAI } = useTasks();
+  const { notes, updateNote } = useNotes();
   const { toast } = useToast();
 
   const handleAddTask = useCallback((day: Day, text: string) => {
@@ -85,7 +85,7 @@ export default function WeeklyPlanner() {
     }
   }, [allTasksForAI, addTask, toast]);
 
-  if (tasksLoading || notesLoading) {
+  if (!tasks || !notes) {
     return (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
         {daysOfWeek.map(day => <div key={day} className="h-[500px] w-full rounded-lg bg-card shadow-sm animate-pulse" />)}

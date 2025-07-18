@@ -15,8 +15,7 @@ import { useAuth } from '@/hooks/use-auth';
 import type { Day, DayNotes, Note } from '@/lib/types';
 
 interface NotesContextType {
-    notes: DayNotes;
-    loading: boolean;
+    notes: DayNotes | null;
     updateNote: (day: Day, content: string) => Promise<void>;
 }
 
@@ -34,17 +33,14 @@ const initialNotes: DayNotes = {
 
 export function NoteProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [notes, setNotes] = useState<DayNotes>(initialNotes);
-  const [loading, setLoading] = useState(true);
+  const [notes, setNotes] = useState<DayNotes | null>(null);
 
   useEffect(() => {
     if (!user) {
       setNotes(initialNotes);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
     const notesCollectionRef = collection(firestore, 'users', user.uid, 'notes');
     const q = query(notesCollectionRef);
 
@@ -56,10 +52,9 @@ export function NoteProvider({ children }: { children: ReactNode }) {
       });
 
       setNotes(notesData);
-      setLoading(false);
     }, (error) => {
       console.error("Error fetching notes: ", error);
-      setLoading(false);
+      setNotes(initialNotes); // Set to initial on error
     });
 
     return () => unsubscribe();
@@ -75,7 +70,7 @@ export function NoteProvider({ children }: { children: ReactNode }) {
     }, { merge: true });
   }, [user]);
 
-  const value = { notes, loading, updateNote };
+  const value = { notes, updateNote };
 
   return <NotesContext.Provider value={value}>{children}</NotesContext.Provider>;
 }
