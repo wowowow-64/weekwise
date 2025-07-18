@@ -83,6 +83,11 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider);
       router.push('/planner');
     } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        // User closed the popup, so we can safely ignore this error.
+        return;
+      }
+      
       let description = error.message;
       if (error.code === 'auth/unauthorized-domain') {
           description = `This domain is not authorized for Google Sign-In. Go to your Firebase project -> Authentication -> Settings -> Authorized domains, and add the domain you are using.`;
