@@ -6,7 +6,6 @@ import type { Day } from '@/lib/types';
 import DayColumn from './DayColumn';
 import { getSuggestedTaskAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import Loader from './Loader';
 
 const daysOfWeek: Day[] = [
   'Monday',

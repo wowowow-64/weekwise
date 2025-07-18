@@ -75,19 +75,21 @@ export default function Header() {
 
   return (
     <>
-      <div className="flex items-center justify-between">
+      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
         <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           WeekWise
         </h1>
-        <div className="flex items-center gap-4">
-            <Button onClick={handleGetSummary} disabled={isLoading}>
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <BookCheck className="mr-2 h-4 w-4" />
-              )}
-              Summarize Week
-            </Button>
+        <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+            <div className="ml-auto flex-1 sm:flex-initial">
+              <Button onClick={handleGetSummary} disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <BookCheck className="mr-2 h-4 w-4" />
+                )}
+                Summarize Week
+              </Button>
+            </div>
             {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -118,7 +120,7 @@ export default function Header() {
             </DropdownMenu>
             )}
         </div>
-      </div>
+      </header>
       <Dialog open={isSummaryOpen} onOpenChange={setIsSummaryOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

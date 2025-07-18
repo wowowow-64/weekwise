@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   collection,
   query,
@@ -16,6 +17,18 @@ import { firestore } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import type { Task, Day, DayTasks } from '@/lib/types';
 
+interface TasksContextType {
+    tasks: DayTasks;
+    loading: boolean;
+    addTask: (day: Day, text: string) => Promise<void>;
+    toggleTask: (day: Day, taskId: string) => Promise<void>;
+    deleteTask: (day: Day, taskId: string) => Promise<void>;
+    updateTask: (day: Day, taskId: string, newText: string) => Promise<void>;
+    allTasksForAI: string[];
+}
+
+const TasksContext = createContext<TasksContextType | undefined>(undefined);
+
 const initialTasks: DayTasks = {
   Monday: [],
   Tuesday: [],
@@ -26,7 +39,7 @@ const initialTasks: DayTasks = {
   Sunday: [],
 };
 
-export function useTasks() {
+export function TaskProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<DayTasks>(initialTasks);
   const [loading, setLoading] = useState(true);
@@ -101,5 +114,15 @@ export function useTasks() {
     await updateDoc(taskDocRef, { text: newText });
   };
 
-  return { tasks, loading, addTask, toggleTask, deleteTask, updateTask, allTasksForAI };
+  const value = { tasks, loading, addTask, toggleTask, deleteTask, updateTask, allTasksForAI };
+
+  return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
+}
+
+export function useTasks() {
+    const context = useContext(TasksContext);
+    if (context === undefined) {
+        throw new Error('useTasks must be used within a TaskProvider');
+    }
+    return context;
 }
