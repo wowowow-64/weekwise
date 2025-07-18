@@ -4,7 +4,7 @@ WeekWise is a modern, offline-first, and AI-enhanced weekly planner built with N
 
 This project was built inside Firebase Studio, an AI-powered IDE for building and deploying web applications on Google Cloud.
 
-![WeekWise Planner Screenshot](https://placehold.co/800x600.png?text=WeekWise+App+Screenshot)
+![WeekWise App Screenshot](https://placehold.co/800x600.png?text=WeekWise+App+Screenshot)
 
 ## ✨ Key Features
 
@@ -41,6 +41,27 @@ To run this project locally, you'll first need a Firebase project.
 4.  Open your browser to `http://localhost:9002/setup`.
 5.  Paste the entire Firebase config object from your Firebase project settings into the text area and save. This will store your configuration securely in your browser's local storage.
 6.  You will be redirected to the login page, where you can now sign up and start using the app.
+
+### 3. IMPORTANT: Deploy Firestore Index for Performance
+
+The application's performance relies on a specific Firestore index. Without it, the app will be very slow to load tasks. You must deploy the index definition included in the project.
+
+First, you need to install the Firebase CLI:
+```bash
+npm install -g firebase-tools
+```
+
+Then, log in to Firebase:
+```bash
+firebase login
+```
+
+Finally, from your project directory, deploy the Firestore indexes:
+```bash
+firebase deploy --only firestore:indexes
+```
+
+This command will read the `firestore.indexes.json` file and create the necessary index in your Firebase project. Index creation can take a few minutes.
 
 ## 📦 Deployment
 
