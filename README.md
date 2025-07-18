@@ -72,12 +72,13 @@ If you prefer not to use the CLI, you can create the index manually in the Fireb
 1.  Go to your **Firebase project**.
 2.  In the left-hand menu, under `Build`, click on **Firestore Database**.
 3.  Go to the **Indexes** tab at the top.
-4.  Click on **Create index**.
-5.  Set the following fields:
+4.  Click on the **Single field** tab.
+5.  In the "Add exemption" dialog that appears, set the following fields:
     *   **Collection ID:** `tasks`
-    *   **Field to index:**
-        1.  **Field path:** `createdAt`, **Order:** `Descending`
-6.  Click **Create**.
+    *   **Field path:** `createdAt`
+    *   Under **Configuration**, check the box for **Descending** ordering.
+    *   Make sure **Array** is unchecked.
+6.  Click **Save**.
 
 The index will start building and may take a few minutes to become active.
 
