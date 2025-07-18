@@ -75,7 +75,7 @@ If you prefer not to use the CLI, you can create the index manually in the Fireb
 4.  Click on **Create index**.
 5.  Set the following fields:
     *   **Collection ID:** `tasks`
-    *   **Fields to index:**
+    *   **Field to index:**
         1.  **Field path:** `createdAt`, **Order:** `Descending`
 6.  Click **Create**.
 
