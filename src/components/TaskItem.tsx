@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -15,7 +16,7 @@ interface TaskItemProps {
   onUpdate: (newText: string) => void;
 }
 
-export default function TaskItem({ task, onToggle, onDelete, onUpdate }: TaskItemProps) {
+function TaskItem({ task, onToggle, onDelete, onUpdate }: TaskItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -96,3 +97,5 @@ export default function TaskItem({ task, onToggle, onDelete, onUpdate }: TaskIte
     </div>
   );
 }
+
+export default React.memo(TaskItem);

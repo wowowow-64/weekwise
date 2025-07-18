@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useTasks } from '@/hooks/use-tasks';
 import { useNotes } from '@/hooks/use-notes';
 import type { Day } from '@/lib/types';
@@ -24,32 +24,32 @@ export default function WeeklyPlanner() {
   const { notes, loading: notesLoading, updateNote } = useNotes();
   const { toast } = useToast();
 
-  const handleAddTask = (day: Day, text: string) => {
+  const handleAddTask = useCallback((day: Day, text: string) => {
     addTask(day, text);
-  };
+  }, [addTask]);
 
-  const handleToggleTask = (day: Day, taskId: string) => {
+  const handleToggleTask = useCallback((day: Day, taskId: string) => {
     toggleTask(day, taskId);
-  };
+  }, [toggleTask]);
 
-  const handleDeleteTask = (day: Day, taskId: string) => {
+  const handleDeleteTask = useCallback((day: Day, taskId: string) => {
     deleteTask(day, taskId);
-  };
+  }, [deleteTask]);
 
-  const handleUpdateTask = (day: Day, taskId: string, newText: string) => {
+  const handleUpdateTask = useCallback((day: Day, taskId: string, newText: string) => {
     updateTask(day, taskId, newText);
-  };
+  }, [updateTask]);
 
-  const handleUpdateNote = (day: Day, content: string) => {
+  const handleUpdateNote = useCallback((day: Day, content: string) => {
     updateNote(day, content);
-  }
+  }, [updateNote]);
   
-  const handleSuggestTask = async (day: Day) => {
+  const handleSuggestTask = useCallback(async (day: Day) => {
     const result = await getSuggestedTaskAction(day, allTasksForAI);
 
     if (result.success && result.data && result.data.length > 0) {
       const suggestion = result.data[Math.floor(Math.random() * result.data.length)];
-      handleAddTask(day, suggestion);
+      addTask(day, suggestion);
       toast({
         title: 'Task Suggested!',
         description: `Added "${suggestion}" to ${day}.`,
@@ -61,7 +61,7 @@ export default function WeeklyPlanner() {
         variant: 'destructive',
       });
     }
-  };
+  }, [allTasksForAI, addTask, toast]);
 
   if (tasksLoading || notesLoading) {
     return (

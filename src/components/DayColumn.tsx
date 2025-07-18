@@ -25,7 +25,7 @@ interface DayColumnProps {
   onUpdateNote: (content: string) => void;
 }
 
-export default function DayColumn({
+function DayColumn({
   day,
   tasks,
   note,
@@ -49,7 +49,8 @@ export default function DayColumn({
     if (debouncedNoteContent !== (note?.content || '')) {
       onUpdateNote(debouncedNoteContent);
     }
-  }, [debouncedNoteContent, onUpdateNote, note]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedNoteContent, note?.content]);
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,3 +127,5 @@ export default function DayColumn({
     </Card>
   );
 }
+
+export default React.memo(DayColumn);
