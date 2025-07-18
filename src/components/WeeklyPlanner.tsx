@@ -23,6 +23,15 @@ function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
   return debounced;
 }
 
+const daysOfWeek: Day[] = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
 export default function WeeklyPlanner() {
   const { tasks, addTask, toggleTask, deleteTask, updateTask, allTasksForAI } = useTasks();
@@ -45,8 +54,6 @@ export default function WeeklyPlanner() {
     updateTask(day, taskId, newText);
   }, [updateTask]);
   
-  // This function is now stable and won't be recreated on every render,
-  // preventing the performance bottleneck.
   const debouncedUpdateNote = useMemo(() => {
     return debounce((day: Day, content: string) => {
       updateNote(day, content);
@@ -83,16 +90,6 @@ export default function WeeklyPlanner() {
       </div>
     )
   }
-
-  const daysOfWeek: Day[] = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">

@@ -40,6 +40,16 @@ const initialTasks: DayTasks = {
   Sunday: [],
 };
 
+const daysOfWeek: Day[] = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
+
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<DayTasks | null>(null);
@@ -52,12 +62,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     const tasksCollectionRef = collection(firestore, 'users', user.uid, 'tasks');
     
-    const ninetyDaysAgo = subDays(new Date(), 90);
-    const ninetyDaysAgoTimestamp = Timestamp.fromDate(ninetyDaysAgo);
-
+    // This is a much more efficient query for a weekly planner.
+    // It fetches only the tasks for the 7 days of the week.
     const q = query(
       tasksCollectionRef,
-      where('createdAt', '>=', ninetyDaysAgoTimestamp),
+      where('day', 'in', daysOfWeek),
       orderBy('createdAt', 'desc')
     );
 
@@ -81,6 +90,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [user]);
 
+  // This is still needed for the AI suggestions, but now it's calculated from a much smaller dataset.
   const allTasksForAI = useMemo(() => {
     if (!tasks) return [];
     return Object.values(tasks).flat().map(t => t.text);
