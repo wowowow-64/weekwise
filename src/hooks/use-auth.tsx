@@ -18,15 +18,15 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [firebaseInitialized, setFirebaseInitialized] = useState(false);
 
   useEffect(() => {
-    // Firebase must be initialized before this hook can be used.
-    // The ClientLayout component handles this.
-    if (!auth) {
-        // This can happen if ClientLayout hasn't mounted yet.
-        // The loading state will keep the children from rendering until auth is available.
-        return;
-    }
+    initializeFirebase();
+    setFirebaseInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (!firebaseInitialized) return;
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
@@ -34,9 +34,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
-
-  const value = { user, loading };
+  }, [firebaseInitialized]);
+  
+  const value = { user, loading: loading || !firebaseInitialized };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
