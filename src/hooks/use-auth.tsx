@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -27,6 +28,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!firebaseInitialized) return;
+
+    // The 'auth' object might not be available on the first render if the config
+    // needs to be loaded from localStorage. This effect will re-run once 'auth' is initialized.
+    if (!auth) {
+        // Set a timeout to check again, giving firebase time to initialize.
+        // This is a simple way to wait for the async initialization.
+        const timer = setTimeout(() => setFirebaseInitialized(true), 100);
+        return () => clearTimeout(timer);
+    }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
