@@ -10,11 +10,6 @@ let auth: Auth;
 let firestore: Firestore;
 
 const getFirebaseConfig = (): FirebaseOptions | null => {
-  // This function now ONLY runs on the client.
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  
   const storedConfig = localStorage.getItem('firebaseConfig');
   if (storedConfig) {
     try {
@@ -39,10 +34,6 @@ const getFirebaseConfig = (): FirebaseOptions | null => {
 }
 
 const initializeFirebase = () => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-  
   const firebaseConfig = getFirebaseConfig();
 
   if (getApps().length === 0) {
