@@ -1,9 +1,9 @@
 
 import type {Metadata} from 'next';
-import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 import { AuthProvider } from '@/hooks/use-auth';
 import { ThemeProvider } from '@/components/theme-provider';
+import { ClientToaster } from '@/components/ClientToaster';
 
 export const metadata: Metadata = {
   title: 'WeekWise',
@@ -55,7 +55,7 @@ export default function RootLayout({
             {children}
           </AuthProvider>
         </ThemeProvider>
-        <Toaster />
+        <ClientToaster />
       </body>
     </html>
   );
