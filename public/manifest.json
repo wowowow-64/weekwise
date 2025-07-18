@@ -1,12 +1,11 @@
 {
-  "theme_color": "#60a5fa",
-  "background_color": "#eff6ff",
-  "display": "standalone",
-  "scope": "/",
-  "start_url": "/",
   "name": "WeekWise",
   "short_name": "WeekWise",
   "description": "A weekly planner to organize your life.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F0F8FF",
+  "theme_color": "#6495ED",
   "icons": [
     {
       "src": "/icons/icon-192x192.svg",
