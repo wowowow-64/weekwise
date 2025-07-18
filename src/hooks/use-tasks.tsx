@@ -1,7 +1,7 @@
 
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import {
   collection,
   query,
@@ -58,22 +58,40 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const q = query(tasksCollectionRef, orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const tasksData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as (Task & {createdAt: Timestamp})[];
-      
-      const groupedTasks: DayTasks = { ...initialTasks };
-      // Explicitly clear arrays to avoid stale data
-      Object.keys(groupedTasks).forEach(day => {
-        groupedTasks[day as Day] = [];
-      });
+      setTasks(prevTasks => {
+        const newTasks: DayTasks = { ...prevTasks };
+        let allTasksText: string[] | null = null;
 
-      tasksData.forEach(task => {
-        if (groupedTasks[task.day]) {
-          groupedTasks[task.day].push(task);
+        snapshot.docChanges().forEach(change => {
+            const task = { id: change.doc.id, ...change.doc.data() } as Task;
+            const day = task.day;
+
+            if (change.type === "added") {
+                if (!newTasks[day].some(t => t.id === task.id)) {
+                  newTasks[day] = [task, ...newTasks[day]];
+                }
+            }
+            if (change.type === "modified") {
+                const index = newTasks[day].findIndex(t => t.id === task.id);
+                if (index !== -1) {
+                  newTasks[day][index] = task;
+                }
+            }
+            if (change.type === "removed") {
+                newTasks[day] = newTasks[day].filter(t => t.id !== task.id);
+            }
+        });
+        
+        // To avoid recomputing on every change, we check if we need to.
+        if (snapshot.docChanges().length > 0) {
+            const flattenedTasks = Object.values(newTasks).flat();
+            allTasksText = flattenedTasks.map(t => t.text);
+            setAllTasksForAI(allTasksText);
         }
+
+        return newTasks;
       });
 
-      setTasks(groupedTasks);
-      setAllTasksForAI(tasksData.map(t => t.text));
       setLoading(false);
     }, (error) => {
       console.error("Error fetching tasks: ", error);
