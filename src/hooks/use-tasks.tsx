@@ -17,7 +17,7 @@ import {
 import { firestore } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import type { Task, Day, DayTasks } from '@/lib/types';
-import { startOfWeek, endOfWeek } from 'date-fns';
+import { subDays, format } from 'date-fns';
 
 interface TasksContextType {
     tasks: DayTasks;
@@ -56,30 +56,34 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     const tasksCollectionRef = collection(firestore, 'users', user.uid, 'tasks');
     
-    // Fetch tasks for the current week to improve performance
-    const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
-    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-    const weekStartTimestamp = Timestamp.fromDate(weekStart);
-    const weekEndTimestamp = Timestamp.fromDate(weekEnd);
-
+    // Fetch tasks from the last 90 days for better AI context without sacrificing performance
+    const ninetyDaysAgo = subDays(new Date(), 90);
+    const ninetyDaysAgoTimestamp = Timestamp.fromDate(ninetyDaysAgo);
 
     const q = query(
       tasksCollectionRef,
-      where('createdAt', '>=', weekStartTimestamp),
-      where('createdAt', '<=', weekEndTimestamp),
+      where('createdAt', '>=', ninetyDaysAgoTimestamp),
       orderBy('createdAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newTasksState: DayTasks = { ...initialTasks };
+      const newTasksState: DayTasks = { 
+        Monday: [],
+        Tuesday: [],
+        Wednesday: [],
+        Thursday: [],
+        Friday: [],
+        Saturday: [],
+        Sunday: [],
+      };
       snapshot.forEach((doc) => {
         const task = { id: doc.id, ...doc.data() } as Task;
-        if (newTasksState[task.day]) {
-          newTasksState[task.day].push(task);
+        // Determine the day of the week from the 'day' field stored in the document
+        const dayOfWeek = task.day;
+        if (newTasksState[dayOfWeek]) {
+          newTasksState[dayOfWeek].push(task);
         } else {
-          // Handle case where task.day is not a valid Day key, if necessary
-          console.warn(`Task has invalid day: ${task.day}`);
+          console.warn(`Task with id ${task.id} has invalid day: ${task.day}`);
         }
       });
       setTasks(newTasksState);
