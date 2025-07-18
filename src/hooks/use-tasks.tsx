@@ -69,18 +69,29 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-        const newTasks: DayTasks = { ...initialTasks };
+        setTasks(prevTasks => {
+            const newTasks = { ...prevTasks };
+            
+            snapshot.docChanges().forEach((change) => {
+                const task = { id: change.doc.id, ...change.doc.data() } as Task;
 
-        snapshot.forEach(doc => {
-            const task = { id: doc.id, ...doc.data() } as Task;
-            if (newTasks[task.day] && !newTasks[task.day].some(t => t.id === task.id)) {
-                newTasks[task.day].push(task);
-            }
+                if (change.type === "added") {
+                    // Add to the beginning of the list to maintain order
+                    newTasks[task.day] = [task, ...newTasks[task.day].filter(t => t.id !== task.id)];
+                }
+                if (change.type === "modified") {
+                    newTasks[task.day] = newTasks[task.day].map(t => t.id === task.id ? task : t);
+                }
+                if (change.type === "removed") {
+                    newTasks[task.day] = newTasks[task.day].filter(t => t.id !== task.id);
+                }
+            });
+
+            const allTasksText = Object.values(newTasks).flat().map(t => t.text);
+            setAllTasksForAI(allTasksText);
+            return newTasks;
         });
 
-        const allTasksText = Object.values(newTasks).flat().map(t => t.text);
-        setAllTasksForAI(allTasksText);
-        setTasks(newTasks);
         setLoading(false);
     }, (error) => {
       console.error("Error fetching tasks: ", error);
@@ -90,47 +101,36 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [user]);
 
-  const addTask = async (day: Day, text: string) => {
+  const addTask = useCallback(async (day: Day, text: string) => {
     if (!user) return;
     const tasksCollectionRef = collection(firestore, 'users', user.uid, 'tasks');
-    const newTaskDoc = await addDoc(tasksCollectionRef, {
+    await addDoc(tasksCollectionRef, {
       text,
       completed: false,
       day,
       createdAt: Timestamp.now(),
     });
-    const newTask: Task = {
-        id: newTaskDoc.id,
-        text,
-        completed: false,
-        day,
-        createdAt: Timestamp.now(),
-    };
-    setTasks(prev => ({...prev, [day]: [newTask, ...prev[day]]}));
-  };
+  }, [user]);
 
-  const toggleTask = async (day: Day, taskId: string) => {
+  const toggleTask = useCallback(async (day: Day, taskId: string) => {
     if (!user) return;
     const task = tasks[day]?.find(t => t.id === taskId);
     if (!task) return;
     const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
     await updateDoc(taskDocRef, { completed: !task.completed });
-    setTasks(prev => ({...prev, [day]: prev[day].map(t => t.id === taskId ? {...t, completed: !t.completed} : t)}))
-  };
+  }, [user, tasks]);
   
-  const deleteTask = async (day: Day, taskId: string) => {
+  const deleteTask = useCallback(async (day: Day, taskId: string) => {
     if (!user) return;
     const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
     await deleteDoc(taskDocRef);
-    setTasks(prev => ({...prev, [day]: prev[day].filter(t => t.id !== taskId)}));
-  };
+  }, [user]);
 
-  const updateTask = async (day: Day, taskId: string, newText: string) => {
+  const updateTask = useCallback(async (day: Day, taskId: string, newText: string) => {
     if (!user) return;
     const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
     await updateDoc(taskDocRef, { text: newText });
-    setTasks(prev => ({...prev, [day]: prev[day].map(t => t.id === taskId ? {...t, text: newText} : t)}))
-  };
+  }, [user]);
 
   const value = { tasks, loading, addTask, toggleTask, deleteTask, updateTask, allTasksForAI };
 
