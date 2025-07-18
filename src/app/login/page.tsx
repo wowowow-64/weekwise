@@ -33,9 +33,13 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/planner');
     } catch (error: any) {
+      let description = error.message;
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/api-key-not-valid') {
+        description = 'Login failed. Please check your credentials or configure the app via the setup page.';
+      }
       toast({
         title: 'Login Failed',
-        description: error.message,
+        description: description,
         variant: 'destructive',
       });
     } finally {
@@ -83,10 +87,16 @@ export default function LoginPage() {
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign In
             </Button>
-            <div className="text-center text-sm">
+            <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{' '}
               <Link href="/signup" className="underline">
                 Sign up
+              </Link>
+            </div>
+            <div className="text-center text-sm">
+              First time setup?{' '}
+              <Link href="/setup" className="underline">
+                Configure Firebase
               </Link>
             </div>
           </CardFooter>

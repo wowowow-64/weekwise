@@ -20,22 +20,31 @@ export function useLocalStorage<T>(
     }
   }, [initialValue, key]);
 
-  const [storedValue, setStoredValue] = useState<T>(readValue);
+  const [storedValue, setStoredValue] = useState<T>(initialValue);
+
+  // We need to use an effect to read the value on the client side.
+  // This is to prevent hydration mismatches.
+  useEffect(() => {
+    setStoredValue(readValue());
+  }, [readValue]);
 
   const setValue = (value: T | ((val: T) => T)) => {
+    if (typeof window === 'undefined') {
+      console.warn(
+        `Tried setting localStorage key “${key}” even though environment is not a client`
+      );
+      return;
+    }
+
     try {
       const newValue = value instanceof Function ? value(storedValue) : value;
       window.localStorage.setItem(key, JSON.stringify(newValue));
       setStoredValue(newValue);
       window.dispatchEvent(new Event('local-storage'));
-    } catch (error) {
+    } catch (error)t {
       console.warn(`Error setting localStorage key “${key}”:`, error);
     }
   };
-
-  useEffect(() => {
-    setStoredValue(readValue());
-  }, [readValue]);
 
   useEffect(() => {
     const handleStorageChange = () => {
