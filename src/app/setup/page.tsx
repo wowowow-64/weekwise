@@ -37,24 +37,27 @@ export default function SetupPage() {
 
   const handleSave = () => {
     try {
-      // Extract the JSON object from the script
-      const jsonString = script.substring(script.indexOf('{'), script.lastIndexOf('}') + 1);
-
-      if (!jsonString) {
-        throw new Error("Invalid script format. Could not find Firebase config object.");
+      if (!script.includes('firebaseConfig')) {
+        throw new Error("Invalid script format. Please paste the entire Firebase config snippet.");
       }
 
-      const parsedConfig = JSON.parse(jsonString);
+      // Safely evaluate the script to get the config object
+      // This is a controlled environment, only for this specific config format.
+      const firebaseConfig = (new Function(`${script}; return firebaseConfig;`))();
+
+      if (!firebaseConfig) {
+        throw new Error("Could not extract firebaseConfig object from the script.");
+      }
 
       // Basic validation
       const requiredKeys = ['apiKey', 'authDomain', 'projectId', 'appId'];
-      const missingKeys = requiredKeys.filter(key => !parsedConfig[key]);
+      const missingKeys = requiredKeys.filter(key => !firebaseConfig[key]);
 
       if (missingKeys.length > 0) {
-        throw new Error(`Missing required keys: ${missingKeys.join(', ')}`);
+        throw new Error(`Missing required keys in config: ${missingKeys.join(', ')}`);
       }
 
-      setConfig(parsedConfig);
+      setConfig(firebaseConfig);
 
       toast({
         title: 'Configuration Saved',
@@ -66,11 +69,11 @@ export default function SetupPage() {
           router.push('/login');
       }, 2000);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast({
         title: 'Invalid Script',
-        description: 'Could not parse the Firebase config. Please paste the entire script, including "const firebaseConfig = { ... };".',
+        description: error.message || 'Could not parse the Firebase config. Please paste the entire script, including "const firebaseConfig = { ... };".',
         variant: 'destructive',
       });
     }
