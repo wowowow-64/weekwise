@@ -1,9 +1,11 @@
+import type { Timestamp } from 'firebase/firestore';
 
 export interface Task {
   id: string;
   text: string;
   completed: boolean;
   day: Day;
+  createdAt: Timestamp;
 }
 
 export interface Note {

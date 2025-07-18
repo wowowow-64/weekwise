@@ -12,6 +12,7 @@ import {
   doc,
   Timestamp,
   orderBy,
+  where,
 } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
@@ -55,44 +56,32 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     setLoading(true);
     const tasksCollectionRef = collection(firestore, 'users', user.uid, 'tasks');
-    const q = query(tasksCollectionRef, orderBy('createdAt', 'desc'));
+    
+    // Fetch tasks from the last 90 days to improve performance
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    const ninetyDaysAgoTimestamp = Timestamp.fromDate(ninetyDaysAgo);
+
+    const q = query(
+      tasksCollectionRef,
+      where('createdAt', '>=', ninetyDaysAgoTimestamp),
+      orderBy('createdAt', 'desc')
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setTasks(prevTasks => {
-        const newTasks: DayTasks = { ...prevTasks };
-        let allTasksText: string[] | null = null;
+        const newTasks: DayTasks = { ...initialTasks };
 
-        snapshot.docChanges().forEach(change => {
-            const task = { id: change.doc.id, ...change.doc.data() } as Task;
-            const day = task.day;
-
-            if (change.type === "added") {
-                if (!newTasks[day].some(t => t.id === task.id)) {
-                  newTasks[day] = [task, ...newTasks[day]];
-                }
-            }
-            if (change.type === "modified") {
-                const index = newTasks[day].findIndex(t => t.id === task.id);
-                if (index !== -1) {
-                  newTasks[day][index] = task;
-                }
-            }
-            if (change.type === "removed") {
-                newTasks[day] = newTasks[day].filter(t => t.id !== task.id);
+        snapshot.forEach(doc => {
+            const task = { id: doc.id, ...doc.data() } as Task;
+            if (newTasks[task.day] && !newTasks[task.day].some(t => t.id === task.id)) {
+                newTasks[task.day].push(task);
             }
         });
-        
-        // To avoid recomputing on every change, we check if we need to.
-        if (snapshot.docChanges().length > 0) {
-            const flattenedTasks = Object.values(newTasks).flat();
-            allTasksText = flattenedTasks.map(t => t.text);
-            setAllTasksForAI(allTasksText);
-        }
 
-        return newTasks;
-      });
-
-      setLoading(false);
+        const allTasksText = Object.values(newTasks).flat().map(t => t.text);
+        setAllTasksForAI(allTasksText);
+        setTasks(newTasks);
+        setLoading(false);
     }, (error) => {
       console.error("Error fetching tasks: ", error);
       setLoading(false);
@@ -104,12 +93,20 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const addTask = async (day: Day, text: string) => {
     if (!user) return;
     const tasksCollectionRef = collection(firestore, 'users', user.uid, 'tasks');
-    await addDoc(tasksCollectionRef, {
+    const newTaskDoc = await addDoc(tasksCollectionRef, {
       text,
       completed: false,
       day,
       createdAt: Timestamp.now(),
     });
+    const newTask: Task = {
+        id: newTaskDoc.id,
+        text,
+        completed: false,
+        day,
+        createdAt: Timestamp.now(),
+    };
+    setTasks(prev => ({...prev, [day]: [newTask, ...prev[day]]}));
   };
 
   const toggleTask = async (day: Day, taskId: string) => {
@@ -118,18 +115,21 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (!task) return;
     const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
     await updateDoc(taskDocRef, { completed: !task.completed });
+    setTasks(prev => ({...prev, [day]: prev[day].map(t => t.id === taskId ? {...t, completed: !t.completed} : t)}))
   };
   
   const deleteTask = async (day: Day, taskId: string) => {
     if (!user) return;
     const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
     await deleteDoc(taskDocRef);
+    setTasks(prev => ({...prev, [day]: prev[day].filter(t => t.id !== taskId)}));
   };
 
   const updateTask = async (day: Day, taskId: string, newText: string) => {
     if (!user) return;
     const taskDocRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
     await updateDoc(taskDocRef, { text: newText });
+    setTasks(prev => ({...prev, [day]: prev[day].map(t => t.id === taskId ? {...t, text: newText} : t)}))
   };
 
   const value = { tasks, loading, addTask, toggleTask, deleteTask, updateTask, allTasksForAI };
