@@ -42,8 +42,9 @@ const initializeFirebase = () => {
     return;
   }
   
+  const firebaseConfig = getFirebaseConfig();
+
   if (getApps().length === 0) {
-    const firebaseConfig = getFirebaseConfig();
     if (firebaseConfig) {
       try {
         app = initializeApp(firebaseConfig);
