@@ -10,6 +10,10 @@ let firestore: Firestore;
 
 const getFirebaseConfig = (): FirebaseOptions | null => {
   // This function now ONLY runs on the client.
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
   const storedConfig = localStorage.getItem('firebaseConfig');
   if (storedConfig) {
     try {
@@ -21,6 +25,8 @@ const getFirebaseConfig = (): FirebaseOptions | null => {
       }
     } catch (e) {
       console.error("Could not parse firebaseConfig from localStorage", e);
+      // If there's an error (e.g., malformed data), clear it.
+      localStorage.removeItem('firebaseConfig');
     }
   }
   return null;
