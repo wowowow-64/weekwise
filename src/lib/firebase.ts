@@ -2,6 +2,7 @@
 import { initializeApp, getApps, getApp, type FirebaseApp, type FirebaseOptions } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
+import { decrypt } from './crypto';
 
 let app: FirebaseApp;
 let auth: Auth;
@@ -12,7 +13,9 @@ const getFirebaseConfig = (): FirebaseOptions | null => {
   const storedConfig = localStorage.getItem('firebaseConfig');
   if (storedConfig) {
     try {
-      const config = JSON.parse(storedConfig);
+      // Decrypt the config before parsing
+      const decryptedConfig = decrypt(storedConfig);
+      const config = JSON.parse(decryptedConfig);
       if (config.apiKey && config.projectId) {
         return config;
       }

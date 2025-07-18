@@ -15,16 +15,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { encrypt } from '@/lib/crypto';
+
 
 export default function SetupPage() {
-  const [_, setConfig] = useLocalStorage('firebaseConfig', {
-    apiKey: '',
-    authDomain: '',
-    projectId: '',
-    storageBucket: '',
-    messagingSenderId: '',
-    appId: '',
-  });
+  const [_, setConfig] = useLocalStorage('firebaseConfig', '');
 
   const [script, setScript] = useState('');
   const [isMounted, setIsMounted] = useState(false);
@@ -57,7 +52,10 @@ export default function SetupPage() {
         throw new Error(`Missing required keys in config: ${missingKeys.join(', ')}`);
       }
 
-      setConfig(firebaseConfig);
+      const configString = JSON.stringify(firebaseConfig);
+      const encryptedConfig = encrypt(configString);
+      setConfig(encryptedConfig);
+
 
       toast({
         title: 'Configuration Saved',
@@ -89,8 +87,8 @@ export default function SetupPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Firebase Setup</CardTitle>
           <CardDescription>
-            Paste your entire Firebase project configuration script here. This will be saved in
-            your browser&apos;s local storage.
+            Paste your entire Firebase project configuration script here. This will be saved securely
+            in your browser&apos;s local storage for offline use.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">

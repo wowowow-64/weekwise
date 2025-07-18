@@ -13,7 +13,12 @@ export function useLocalStorage<T>(
 
     try {
       const item = window.localStorage.getItem(key);
-      return item ? (JSON.parse(item) as T) : initialValue;
+      // For encrypted values, they are stored as strings.
+      // For other values, they might be JSON.
+      // We handle both cases.
+      if (item === null) return initialValue;
+      if (typeof initialValue === 'string') return item as T;
+      return JSON.parse(item) as T;
     } catch (error) {
       console.warn(`Error reading localStorage key “${key}”:`, error);
       return initialValue;
@@ -38,7 +43,9 @@ export function useLocalStorage<T>(
 
     try {
       const newValue = value instanceof Function ? value(storedValue) : value;
-      window.localStorage.setItem(key, JSON.stringify(newValue));
+      // Store as string if it's a string, otherwise stringify.
+      const valueToStore = typeof newValue === 'string' ? newValue : JSON.stringify(newValue);
+      window.localStorage.setItem(key, valueToStore);
       setStoredValue(newValue);
       window.dispatchEvent(new Event('local-storage'));
     } catch (error) {
