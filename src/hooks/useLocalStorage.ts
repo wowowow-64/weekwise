@@ -41,7 +41,7 @@ export function useLocalStorage<T>(
       window.localStorage.setItem(key, JSON.stringify(newValue));
       setStoredValue(newValue);
       window.dispatchEvent(new Event('local-storage'));
-    } catch (error)t {
+    } catch (error) {
       console.warn(`Error setting localStorage key “${key}”:`, error);
     }
   };
