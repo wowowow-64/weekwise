@@ -11,13 +11,13 @@ import {
   CardTitle,
   CardFooter,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 export default function SetupPage() {
-  const [config, setConfig] = useLocalStorage('firebaseConfig', {
+  const [_, setConfig] = useLocalStorage('firebaseConfig', {
     apiKey: '',
     authDomain: '',
     projectId: '',
@@ -26,6 +26,7 @@ export default function SetupPage() {
     appId: '',
   });
 
+  const [script, setScript] = useState('');
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -34,31 +35,40 @@ export default function SetupPage() {
     setIsMounted(true);
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setConfig((prevConfig) => ({ ...prevConfig, [id]: value }));
-  };
-
   const handleSave = () => {
-    // Basic validation
-    if (Object.values(config).some(v => v === '')) {
+    try {
+      // Extract the JSON object from the script
+      const jsonString = script.substring(script.indexOf('{'), script.lastIndexOf('}') + 1);
+      const parsedConfig = JSON.parse(jsonString);
+
+      // Basic validation
+      const requiredKeys = ['apiKey', 'authDomain', 'projectId', 'appId'];
+      const missingKeys = requiredKeys.filter(key => !parsedConfig[key]);
+
+      if (missingKeys.length > 0) {
+        throw new Error(`Missing required keys: ${missingKeys.join(', ')}`);
+      }
+
+      setConfig(parsedConfig);
+
       toast({
-        title: 'Incomplete Configuration',
-        description: 'Please fill out all Firebase configuration fields.',
+        title: 'Configuration Saved',
+        description: 'Your Firebase config has been saved. You will be redirected to the login page.',
+      });
+
+      // Redirect to login page to re-initialize firebase with new config
+      setTimeout(() => {
+          router.push('/login');
+      }, 2000);
+
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Invalid Script',
+        description: 'Could not parse the Firebase config. Please paste the entire script, including "const firebaseConfig = { ... };".',
         variant: 'destructive',
       });
-      return;
     }
-    // The useLocalStorage hook already saves on change, but we'll toast on explicit save.
-    toast({
-      title: 'Configuration Saved',
-      description: 'Your Firebase config has been saved to local storage. You will be redirected to the login page.',
-    });
-    
-    // Redirect to login page to re-initialize firebase with new config
-    setTimeout(() => {
-        router.push('/login');
-    }, 2000);
   };
 
   if (!isMounted) {
@@ -71,34 +81,20 @@ export default function SetupPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Firebase Setup</CardTitle>
           <CardDescription>
-            Enter your Firebase project configuration here. This will be saved in
+            Paste your entire Firebase project configuration script here. This will be saved in
             your browser&apos;s local storage.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="apiKey" className="text-right">API Key</Label>
-            <Input id="apiKey" value={config.apiKey} onChange={handleChange} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="authDomain" className="text-right">Auth Domain</Label>
-            <Input id="authDomain" value={config.authDomain} onChange={handleChange} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="projectId" className="text-right">Project ID</Label>
-            <Input id="projectId" value={config.projectId} onChange={handleChange} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="storageBucket" className="text-right">Storage Bucket</Label>
-            <Input id="storageBucket" value={config.storageBucket} onChange={handleChange} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="messagingSenderId" className="text-right">Messaging Sender ID</Label>
-            <Input id="messagingSenderId" value={config.messagingSenderId} onChange={handleChange} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="appId" className="text-right">App ID</Label>
-            <Input id="appId" value={config.appId} onChange={handleChange} className="col-span-3" />
+          <div className="grid w-full gap-1.5">
+            <Label htmlFor="firebase-script">Firebase Config Script</Label>
+            <Textarea
+              id="firebase-script"
+              placeholder="const firebaseConfig = { ... };"
+              value={script}
+              onChange={(e) => setScript(e.target.value)}
+              className="min-h-[200px] font-mono text-xs"
+            />
           </div>
         </CardContent>
         <CardFooter>
