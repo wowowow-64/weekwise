@@ -61,12 +61,12 @@ export default function SetupPage() {
 
       toast({
         title: 'Configuration Saved',
-        description: 'Your Firebase config has been saved. You will be redirected to the login page.',
+        description: 'Your Firebase config has been saved. The page will now reload.',
       });
 
-      // Redirect to login page to re-initialize firebase with new config
+      // Reload the page to re-initialize firebase with new config
       setTimeout(() => {
-          router.push('/login');
+          window.location.href = '/login';
       }, 2000);
 
     } catch (error: any) {
