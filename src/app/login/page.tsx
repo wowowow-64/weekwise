@@ -85,12 +85,16 @@ export default function LoginPage() {
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
         // User closed the popup, so we can safely ignore this error.
+        setIsGoogleLoading(false);
         return;
       }
       
       let description = error.message;
       if (error.code === 'auth/unauthorized-domain') {
           description = `This domain is not authorized for Google Sign-In. Go to your Firebase project -> Authentication -> Settings -> Authorized domains, and add the domain you are using.`;
+      }
+      if (error.code === 'auth/api-key-not-valid') {
+          description = "Google Sign-In failed because the app is not configured correctly. Please use the 'Configure Firebase' link to set it up.";
       }
       toast({
         title: 'Google Sign-In Failed',
