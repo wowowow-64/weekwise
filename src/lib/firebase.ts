@@ -31,34 +31,39 @@ const getFirebaseConfig = (): FirebaseOptions | null => {
   return null;
 }
 
-const initializeFirebase = () => {
+const initializeFirebase = (): boolean => {
   const firebaseConfig = getFirebaseConfig();
 
-  if (!app && firebaseConfig) {
-    try {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      firestore = getFirestore(app);
-      enableIndexedDbPersistence(firestore)
-        .catch((err) => {
-          if (err.code == 'failed-precondition') {
-            console.warn('Firestore persistence failed: Multiple tabs open.');
-          } else if (err.code == 'unimplemented') {
-            console.warn('Firestore persistence not available in this browser.');
-          }
-        });
-    } catch (error) {
-      console.error("Firebase initialization failed:", error);
-      // Reset instances on failure
-      app = null;
-      auth = null;
-      firestore = null;
-      throw error; // Re-throw to be caught by AuthProvider
-    }
-  } else if (getApps().length > 0 && !app) { // check for !app ensures we don't re-assign on hot reloads
-    app = getApp();
+  // If already initialized, return true.
+  if (app) {
+    return true;
+  }
+
+  // If no config, it can't be initialized.
+  if (!firebaseConfig) {
+    return false;
+  }
+
+  try {
+    app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     firestore = getFirestore(app);
+    enableIndexedDbPersistence(firestore)
+      .catch((err) => {
+        if (err.code == 'failed-precondition') {
+          console.warn('Firestore persistence failed: Multiple tabs open.');
+        } else if (err.code == 'unimplemented') {
+          console.warn('Firestore persistence not available in this browser.');
+        }
+      });
+    return true; // Successfully initialized
+  } catch (error) {
+    console.error("Firebase initialization failed:", error);
+    // Reset instances on failure
+    app = null;
+    auth = null;
+    firestore = null;
+    return false; // Failed to initialize
   }
 };
 

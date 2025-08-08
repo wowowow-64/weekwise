@@ -20,20 +20,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      initializeFirebase();
-      const auth = getFirebaseAuth(); // Get auth instance after initialization
-      
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setUser(user);
-        setLoading(false);
-      });
+    // initializeFirebase returns true if config exists and app is setup
+    const isFirebaseInitialized = initializeFirebase();
 
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Firebase initialization failed in AuthProvider:", error);
-      // If initialization fails, we must ensure loading is set to false
-      // so the app can proceed to a state where the user can fix the config.
+    if (isFirebaseInitialized) {
+      try {
+        const auth = getFirebaseAuth();
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          setUser(user);
+          setLoading(false);
+        });
+        return () => unsubscribe();
+      } catch (error) {
+        console.error("Error setting up auth state change listener:", error);
+        setLoading(false);
+      }
+    } else {
+      // If firebase is not initialized (e.g., no config), stop loading.
+      // This allows the app to show the login/setup page.
       setLoading(false);
     }
   }, []);
