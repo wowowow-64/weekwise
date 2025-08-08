@@ -8,6 +8,7 @@ import type { Day } from '@/lib/types';
 import DayColumn from './DayColumn';
 import { getSuggestedTaskAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
+import { daysOfWeek } from '@/lib/config';
 
 // Debounce function
 function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
@@ -22,16 +23,6 @@ function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
 
   return debounced;
 }
-
-const daysOfWeek: Day[] = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
 
 export default function WeeklyPlanner() {
   const { tasks, addTask, toggleTask, deleteTask, updateTask, allTasksForAI } = useTasks();

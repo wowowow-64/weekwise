@@ -17,6 +17,7 @@ import {
 import { getFirebaseFirestore } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import type { Task, Day, DayTasks } from '@/lib/types';
+import { daysOfWeek } from '@/lib/config';
 
 interface TasksContextType {
     tasks: DayTasks | null;
@@ -38,16 +39,6 @@ const initialTasks: DayTasks = {
   Saturday: [],
   Sunday: [],
 };
-
-const daysOfWeek: Day[] = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
